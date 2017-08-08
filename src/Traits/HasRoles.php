@@ -2,6 +2,7 @@
 
 namespace Spatie\Permission\Traits;
 
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Spatie\Permission\Contracts\Role;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,13 +18,19 @@ trait HasRoles
      */
     public function roles(): MorphToMany
     {
+        $now = Carbon::now();
         return $this->morphToMany(
             config('permission.models.role'),
             'model',
             config('permission.table_names.model_has_roles'),
             'model_id',
             'role_id'
-        );
+        )->where(
+            'start', '<=', $now->toDateTimeString()
+        )->where(function ($query) use ($now) {
+            $query->where('end', '>=', $now->toDateTimeString());
+            $query->orWhereNull('end');
+        });
     }
 
     /**
@@ -54,7 +61,7 @@ trait HasRoles
             $roles = $roles->toArray();
         }
 
-        if (! is_array($roles)) {
+        if (!is_array($roles)) {
             $roles = [$roles];
         }
 
@@ -69,7 +76,7 @@ trait HasRoles
         return $query->whereHas('roles', function ($query) use ($roles) {
             $query->where(function ($query) use ($roles) {
                 foreach ($roles as $role) {
-                    $query->orWhere(config('permission.table_names.roles').'.id', $role->id);
+                    $query->orWhere(config('permission.table_names.roles') . '.id', $role->id);
                 }
             });
         });
@@ -134,14 +141,17 @@ trait HasRoles
      */
     public function hasRole($roles): bool
     {
+        //string
         if (is_string($roles)) {
             return $this->roles->contains('name', $roles);
         }
 
+        // Role object
         if ($roles instanceof Role) {
             return $this->roles->contains('id', $roles->id);
         }
 
+        // array of roles
         if (is_array($roles)) {
             foreach ($roles as $role) {
                 if ($this->hasRole($role)) {
@@ -152,6 +162,7 @@ trait HasRoles
             return false;
         }
 
+        // collection of roles
         return $roles->intersect($this->roles)->isNotEmpty();
     }
 
@@ -257,7 +268,7 @@ trait HasRoles
         if (is_string($permission)) {
             $permission = app(Permission::class)->findByName($permission, $this->getDefaultGuardName());
 
-            if (! $permission) {
+            if (!$permission) {
                 return false;
             }
         }
