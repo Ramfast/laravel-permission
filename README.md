@@ -477,54 +477,28 @@ You can use all of the blade directives listed in [using blade directives](#usin
 
 ## Using a middleware
 
-The package doesn't include a middleware to check permissions but it's very trivial to add this yourself:
-
-``` bash
-$ php artisan make:middleware RoleMiddleware
-```
-
-This will create a `app/Http/Middleware/RoleMiddleware.php` file for you, where you can handle your role and permissions check:
-
-```php
-use Auth;
-
-// ...
-
-public function handle($request, Closure $next, $role, $permission=null)
-{
-    if (Auth::guest()) {
-        return redirect($urlOfYourLoginPage);
-    }
-
-    $role = is_array($role)
-        ? $role
-        : explode('|', $role);
-
-    if (! $request->user()->hasAnyRole($role)) {
-        abort(403);
-    }
-
-    if ($permission && ! $request->user()->can($permission)) {
-        abort(403);
-    }
-
-    return $next($request);
-}
-```
-
-Don't forget to add the route middleware to `app/Http/Kernel.php` file:
+This package comes with `RoleMiddleware` and `PermissionMiddleware` middleware. You can add them inside your `app/Http/Kernel.php` file.
 
 ```php
 protected $routeMiddleware = [
     // ...
-    'role' => \App\Http\Middleware\RoleMiddleware::class,
+    'role' => \Spatie\Permission\Middlewares\RoleMiddleware::class,
+    'permission' => \Spatie\Permission\Middlewares\PermissionMiddleware::class,
 ];
 ```
 
 Now you can protect your routes using the middleware you just set up:
 
 ```php
-Route::group(['middleware' => ['role:admin,access_backend']], function () {
+Route::group(['middleware' => ['role:admin']], function () {
+    //
+});
+
+Route::group(['middleware' => ['permission:access_backend']], function () {
+    //
+});
+
+Route::group(['middleware' => ['role:admin','permission:access_backend']], function () {
     //
 });
 ```
@@ -550,6 +524,43 @@ php artisan permission:create-role writer web
 ```bash
 php artisan permission:create-permission edit-articles web
 ```
+
+## Database Seeding
+
+Two notes about Database Seeding:
+
+1. It is best to flush the `spatie.permission.cache` before seeding, to avoid cache conflict errors. This can be done from an Artisan command (see Troubleshooting: Cache section, later) or directly in a seeder class (see example below).
+
+2. Here's a sample seeder, which clears the cache, creates permissions, and then assigns permissions to roles:
+
+	```php
+	use Illuminate\Database\Seeder;
+	use Spatie\Permission\Models\Role;
+	use Spatie\Permission\Models\Permission;
+
+	class RolesAndPermissionsSeeder extends Seeder
+	{
+	    public function run()
+    	{
+        	// Reset cached roles and permissions
+	        app()['cache']->forget('spatie.permission.cache');
+
+	        // create permissions
+	        Permission::create(['name' => 'edit posts']);
+	        Permission::create(['name' => 'delete posts']);
+	        Permission::create(['name' => 'delete users']);
+
+	        // create roles and assign existing permissions
+	        $role = Role::create(['name' => 'Author']);
+	        $role->givePermissionTo('edit posts');
+	        $role->givePermissionTo('delete posts');
+
+	        $role = Role::create(['name' => 'Manager']);
+	        $role->givePermissionTo('delete users');
+	    }
+	}
+
+	```
 
 ## Extending
 
