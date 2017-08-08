@@ -141,28 +141,20 @@ trait HasRoles
      */
     public function hasRole($roles): bool
     {
-        //string
         if (is_string($roles)) {
             return $this->roles->contains('name', $roles);
         }
-
-        // Role object
         if ($roles instanceof Role) {
             return $this->roles->contains('id', $roles->id);
         }
-
-        // array of roles
         if (is_array($roles)) {
             foreach ($roles as $role) {
                 if ($this->hasRole($role)) {
                     return true;
                 }
             }
-
             return false;
         }
-
-        // collection of roles
         return $roles->intersect($this->roles)->isNotEmpty();
     }
 
