@@ -101,7 +101,9 @@ trait HasRoles
             })
             ->all();
 
-        $this->roles()->saveMany($roles);
+        foreach ($roles as $role) {
+            $this->roles()->attach($role, ['start' => Carbon::now()->toDateTimeString()]);
+        }
 
         $this->forgetCachedPermissions();
 
@@ -330,7 +332,7 @@ trait HasRoles
             return explode('|', $pipeString);
         }
 
-        if (! in_array($quoteCharacter, ["'", '"'])) {
+        if (!in_array($quoteCharacter, ["'", '"'])) {
             return explode('|', $pipeString);
         }
 
