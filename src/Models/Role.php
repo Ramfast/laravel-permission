@@ -3,6 +3,7 @@
 namespace Spatie\Permission\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Permission\Traits\HasPermissions;
 use Spatie\Permission\Exceptions\RoleDoesNotExist;
 use Spatie\Permission\Exceptions\GuardDoesNotMatch;
@@ -16,6 +17,7 @@ class Role extends Model implements RoleContract
 {
     use HasPermissions;
     use RefreshesPermissionCache;
+    use SoftDeletes;
 
     public $guarded = ['id'];
 

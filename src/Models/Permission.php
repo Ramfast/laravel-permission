@@ -2,6 +2,7 @@
 
 namespace Spatie\Permission\Models;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Permission\PermissionRegistrar;
@@ -15,6 +16,7 @@ use Spatie\Permission\Contracts\Permission as PermissionContract;
 class Permission extends Model implements PermissionContract
 {
     use RefreshesPermissionCache;
+    use SoftDeletes;
 
     public $guarded = ['id'];
 
@@ -79,7 +81,7 @@ class Permission extends Model implements PermissionContract
 
         $permission = static::getPermissions()->where('name', $name)->where('guard_name', $guardName)->first();
 
-        if (! $permission) {
+        if (!$permission) {
             throw PermissionDoesNotExist::create($name, $guardName);
         }
 
