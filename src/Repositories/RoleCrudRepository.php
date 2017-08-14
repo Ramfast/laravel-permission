@@ -37,7 +37,7 @@ class RoleCrudRepository implements RoleCrudContract
     {
         return $this->role::create([
             'name'       => $attributes['name'],
-            'guard_name' => $attributes['guard_name'] ?: $this->role->getDefaultGuardName()
+            'guard_name' => array_key_exists('guard_name', $attributes) ? $attributes['guard_name'] : config('auth.defaults.guard')
         ]);
     }
 
@@ -88,11 +88,11 @@ class RoleCrudRepository implements RoleCrudContract
         }
 
         if (is_numeric($role)) {
-            return $role = $this->role::findOrFail($role);
+            return $this->role::findOrFail($role);
         }
 
         if (is_string($role)) {
-            return $role = $this->getRoleByName($role);
+            return $this->getRoleByName($role);
         }
     }
 

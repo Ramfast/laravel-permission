@@ -4,9 +4,11 @@ namespace Spatie\Permission;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\View\Compilers\BladeCompiler;
+use Spatie\Permission\Contracts\PermissionCrudContract;
 use Spatie\Permission\Contracts\Role as RoleContract;
 use Spatie\Permission\Contracts\Permission as PermissionContract;
 use Spatie\Permission\Contracts\RoleCrudContract;
+use Spatie\Permission\Repositories\PermissionCrudRepository;
 use Spatie\Permission\Repositories\RoleCrudRepository;
 
 class PermissionServiceProvider extends ServiceProvider
@@ -54,6 +56,7 @@ class PermissionServiceProvider extends ServiceProvider
         $this->app->bind(PermissionContract::class, $config['permission']);
         $this->app->bind(RoleContract::class, $config['role']);
         $this->app->bind(RoleCrudContract::class, RoleCrudRepository::class);
+        $this->app->bind(PermissionCrudContract::class, PermissionCrudRepository::class);
     }
 
     protected function registerBladeExtensions()

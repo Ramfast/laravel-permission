@@ -20,7 +20,6 @@ interface RoleCrudContract
 
     public function deleteRole($id): bool;
 
-    /* Separate contract? */
     public function assignPermissionsToRole($role, $permissions): Role;
 
     public function removePermissionsFromRole($role, $permissions): Role;
