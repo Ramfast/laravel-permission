@@ -4,7 +4,7 @@ namespace Spatie\Permission\Contracts;
 
 use Illuminate\Support\Collection;
 
-interface HasPermissonsContract
+interface HasPermissionsContract
 {
     public function getRoles($model) : Collection;
 
