@@ -3,6 +3,7 @@
 namespace Spatie\Permission\Traits;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
 use Spatie\Permission\Contracts\Role;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,19 +19,13 @@ trait HasRoles
      */
     public function roles(): MorphToMany
     {
-        $now = Carbon::now();
         return $this->morphToMany(
             config('permission.models.role'),
             'model',
             config('permission.table_names.model_has_roles'),
             'model_id',
             'role_id'
-        )->where(
-            'start', '<=', $now->toDateTimeString()
-        )->where(function ($query) use ($now) {
-            $query->where('end', '>=', $now->toDateTimeString());
-            $query->orWhereNull('end');
-        });
+        );
     }
 
     /**
@@ -85,12 +80,24 @@ trait HasRoles
     /**
      * Assign the given role to the model.
      *
+     * @param string|Carbon $start
+     * @param string|Carbon $end
      * @param array|string|\Spatie\Permission\Contracts\Role ...$roles
      *
      * @return $this
      */
-    public function assignRole(...$roles)
+    public function assignRole($start = null, $end = null, ...$roles)
     {
+        if (!$start) {
+            $start = Carbon::now();
+        }
+        if (!$start instanceof Carbon) {
+            $start = Carbon::parse($start);
+        }
+        if (is_string($end)) {
+            $end = Carbon::parse($end);
+        }
+
         $roles = collect($roles)
             ->flatten()
             ->map(function ($role) {
@@ -102,12 +109,46 @@ trait HasRoles
             ->all();
 
         foreach ($roles as $role) {
-            $this->roles()->attach($role, ['start' => Carbon::now()->toDateTimeString()]);
+            $this->roles()->attach($role, [
+                'start' => $start->toDateTimeString(),
+                'end'   => $end
+            ]);
         }
 
         $this->forgetCachedPermissions();
 
         return $this;
+    }
+
+    /**
+     * Revoke the given role from the model.
+     *
+     * @param string|\Spatie\Permission\Contracts\Role $role
+     *
+     * @return bool
+     */
+    public function endRole($role, $end = null)
+    {
+        if (!$end) {
+            $end = Carbon::now();
+        }
+        if (is_string($end)) {
+            $end = Carbon::parse($end);
+        }
+        if (!$role instanceof Role) {
+            $role = $this->getStoredRole($role);
+        }
+
+        $now = Carbon::now();
+
+        $this->roles()
+            ->where('name', $role->name)
+            ->where('guard_name', $role->guard_name)
+            ->where('start', '<=', $now->toDateTimeString())
+            ->where(function ($query) use ($now) {
+                $query->where('end', '>=', $now->toDateTimeString());
+                $query->orWhereNull('end');
+            })->updateExistingPivot($role->id, ['end' => $end]);
     }
 
     /**
