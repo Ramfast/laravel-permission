@@ -35,7 +35,7 @@ class CreatePermissionTables extends Migration
             $table->integer('permission_id')->unsigned();
             $table->morphs('model');
             $table->date('start');
-            $table->date('end');
+            $table->date('end')->nullable();
 
             $table->foreign('permission_id')->references('id')->on($tableNames['permissions'])->onDelete('cascade');
             $table->primary(['permission_id', 'model_id', 'model_type']);
@@ -45,7 +45,7 @@ class CreatePermissionTables extends Migration
             $table->integer('role_id')->unsigned();
             $table->morphs('model');
             $table->dateTime('start');
-            $table->dateTime('end');
+            $table->dateTime('end')->nullable();
 
             $table->foreign('role_id')->references('id')->on($tableNames['roles'])->onDelete('cascade');
             $table->primary(['role_id', 'model_id', 'model_type']);
