@@ -57,6 +57,7 @@ class PermissionServiceProvider extends ServiceProvider
         $this->app->bind(RoleContract::class, $config['role']);
         $this->app->bind(RoleCrudContract::class, RoleCrudRepository::class);
         $this->app->bind(PermissionCrudContract::class, PermissionCrudRepository::class);
+        $this->app->bind(HasPermissionsContract::class, HasPermissionsRepository::class);
     }
 
     protected function registerBladeExtensions()
