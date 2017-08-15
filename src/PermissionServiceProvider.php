@@ -4,10 +4,12 @@ namespace Spatie\Permission;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\View\Compilers\BladeCompiler;
+use Spatie\Permission\Contracts\HasPermissionsContract;
 use Spatie\Permission\Contracts\PermissionCrudContract;
 use Spatie\Permission\Contracts\Role as RoleContract;
 use Spatie\Permission\Contracts\Permission as PermissionContract;
 use Spatie\Permission\Contracts\RoleCrudContract;
+use Spatie\Permission\Repositories\HasPermissionsRepository;
 use Spatie\Permission\Repositories\PermissionCrudRepository;
 use Spatie\Permission\Repositories\RoleCrudRepository;
 
