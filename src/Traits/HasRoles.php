@@ -5,6 +5,8 @@ namespace Spatie\Permission\Traits;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use ReflectionClass;
 use Spatie\Permission\Contracts\Role;
 use Illuminate\Database\Eloquent\Builder;
 use Spatie\Permission\Contracts\Permission;
@@ -118,8 +120,10 @@ trait HasRoles
 
         foreach ($roles as $role) {
             $this->roles()->attach($role, [
-                'start' => $start->toDateTimeString(),
-                'end'   => $end
+                'start'      => $start->toDateTimeString(),
+                'end'        => $end,
+                'created_at' => Carbon::now()->toDateTimeString(),
+                'updated_at' => Carbon::now()->toDateTimeString()
             ]);
         }
 
@@ -166,11 +170,18 @@ trait HasRoles
      */
     public function removeRole($role)
     {
-        $this->roles()->detach($this->getStoredRole($role));
+        $role = $this->getStoredRole($role);
+        $reflection = new ReflectionClass($this);
+        DB::table('model_has_roles')
+            ->where('model_id', $this->id)
+            ->where('model_type', $reflection->getName())
+            ->where('role_id', $role->id)
+            ->whereNull('deleted_at')
+            ->update(array('deleted_at' => DB::raw('NOW()')));
     }
 
     /**
-     * Remove all current roles and set the given ones.
+     * Remove all current roles and set the given ones. NB: Does hard delete.
      *
      * @param array ...$roles
      *
