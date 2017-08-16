@@ -35,7 +35,7 @@ trait HasRoles
             config('permission.table_names.model_has_roles'),
             'model_id',
             'role_id'
-        );
+        )->whereNull('model_has_roles.deleted_at');
     }
 
     /**
@@ -49,7 +49,7 @@ trait HasRoles
             config('permission.table_names.model_has_permissions'),
             'model_id',
             'permission_id'
-        );
+        )->whereNull('model_has_permissions.deleted_at');
     }
 
     /**
@@ -161,12 +161,18 @@ trait HasRoles
                 $query->where('end', '>=', $now->toDateTimeString());
                 $query->orWhereNull('end');
             })->updateExistingPivot($role->id, ['end' => $end]);
+
+        $this->forgetCachedPermissions();
+
+        return $this;
     }
 
     /**
-     * Revoke the given role from the model.
+     * Delete the given role from the model.
      *
      * @param string|\Spatie\Permission\Contracts\Role $role
+     *
+     * @return $this
      */
     public function removeRole($role)
     {
@@ -178,6 +184,10 @@ trait HasRoles
             ->where('role_id', $role->id)
             ->whereNull('deleted_at')
             ->update(array('deleted_at' => DB::raw('NOW()')));
+
+        $this->forgetCachedPermissions();
+
+        return $this;
     }
 
     /**
@@ -208,10 +218,12 @@ trait HasRoles
         }
 
         if (is_string($roles)) {
-            return $this->roles->contains('name', $roles);
+            $current_roles = $this->getCurrentRoles();
+            return $current_roles->contains('name', $roles);
         }
         if ($roles instanceof Role) {
-            return $this->roles->contains('id', $roles->id);
+            $current_roles = $this->getCurrentRoles();
+            return $current_roles->contains('id', $roles->id);
         }
         if (is_array($roles)) {
             foreach ($roles as $role) {
@@ -221,7 +233,22 @@ trait HasRoles
             }
             return false;
         }
-        return $roles->intersect($this->roles)->isNotEmpty();
+
+        return $roles->intersect($this->getCurrentRoles())->isNotEmpty();
+    }
+
+    public function getCurrentRoles()
+    {
+        $now = Carbon::now();
+        return $this->roles()
+            ->where('guard_name', $this->getDefaultGuardName())
+            ->where('start', '<=', $now->toDateTimeString())
+            ->where(function ($query) use ($now) {
+                $query->where('end', '>=', $now->toDateTimeString());
+                $query->orWhereNull('end');
+            })
+
+            ->get();
     }
 
     /**
@@ -315,6 +342,17 @@ trait HasRoles
      */
     protected function hasPermissionViaRole(Permission $permission): bool
     {
+        $now = Carbon::now();
+        $roles =
+            $this->roles()
+                ->where('start', '<=', $now->toDateTimeString())
+                ->where(function ($query) use ($now) {
+                    $query->where('end', '>=', $now->toDateTimeString());
+                    $query->orWhereNull('end');
+                })->get();
+
+        return $roles->contains('id', $permission->id);
+
         return $this->hasRole($permission->roles);
     }
 
@@ -335,7 +373,16 @@ trait HasRoles
             }
         }
 
-        return $this->permissions->contains('id', $permission->id);
+        $now = Carbon::now();
+        $permissions =
+            $this->permissions()
+                ->where('start', '<=', $now->toDateTimeString())
+                ->where(function ($query) use ($now) {
+                    $query->where('end', '>=', $now->toDateTimeString());
+                    $query->orWhereNull('end');
+                })->get();
+
+        return $permissions->contains('id', $permission->id);
     }
 
     /**

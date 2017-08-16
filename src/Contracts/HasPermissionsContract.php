@@ -18,15 +18,15 @@ interface HasPermissionsContract
 
 
     /* Getters, Assigners and Removers for Permissions */
-    public function getAllModelPermissions($model);
+    public function getAllDirectPermissions($model);
 
-    public function getAllActiveModelPermissions($model);
+    public function getAllActiveDirectPermissions($model);
 
-    public function assignDirectPermissionToModel($permission, $start = null, $end = null);
+    public function assignDirectPermission($model, $permission, $start = null, $end = null);
 
-    public function endDirectPermissionOnModel($permission, $end = null);
+    public function endDirectPermission($model, $permission, $end = null);
 
-    public function deleteDirectPermissionFromModel($permission_id);
+    public function deleteDirectPermission($model, $permission);
 
 
     /* Checkers */
