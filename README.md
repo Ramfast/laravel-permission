@@ -76,7 +76,7 @@ You can publish the config file with:
 php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider" --tag="config"
 ```
 
-This is the contents of the published `config/permission.php` config file:
+These are the contents of the published `config/permission.php` config file:
 
 ```php
 return [
@@ -419,7 +419,7 @@ roles. Optionally you can pass in the `guard` that the check will be performed o
 @else
     I don't have all of these roles...
 @endhasallroles
-//or
+// or
 @hasallroles('writer|admin')
     I have all of these roles!
 @else
@@ -627,7 +627,7 @@ This package is heavily based on [Jeffrey Way](https://twitter.com/jeffrey_way)'
 on [permissions and roles](https://laracasts.com/series/whats-new-in-laravel-5-1/episodes/16). His original code
 can be found [in this repo on GitHub](https://github.com/laracasts/laravel-5-roles-and-permissions-demo).
 
-Special thanks to [Alex Vanderbist](https://github.com/AlexVanderbist) who greatly helped with `v2`.
+Special thanks to [Alex Vanderbist](https://github.com/AlexVanderbist) who greatly helped with `v2`, and to [Chris Brown](https://github.com/drbyte) for his longtime support  helping us maintain the package.
 
 ## Resources
 
