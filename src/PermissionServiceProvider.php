@@ -29,13 +29,6 @@ class PermissionServiceProvider extends ServiceProvider
             ], 'migrations');
         }
 
-        if ($this->app->runningInConsole()) {
-            $this->commands([
-                Commands\CreateRole::class,
-                Commands\CreatePermission::class,
-            ]);
-        }
-
         $this->registerModelBindings();
 
         $permissionLoader->registerPermissions();
@@ -65,6 +58,7 @@ class PermissionServiceProvider extends ServiceProvider
     protected function registerBladeExtensions()
     {
         $this->app->afterResolving('blade.compiler', function (BladeCompiler $bladeCompiler) {
+
             $bladeCompiler->directive('role', function ($arguments) {
                 list($role, $guard) = explode(',', $arguments.',');
 
@@ -100,6 +94,7 @@ class PermissionServiceProvider extends ServiceProvider
             $bladeCompiler->directive('endhasallroles', function () {
                 return '<?php endif; ?>';
             });
+
         });
     }
 }
