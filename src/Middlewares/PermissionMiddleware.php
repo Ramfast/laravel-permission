@@ -4,21 +4,20 @@ namespace Spatie\Permission\Middlewares;
 
 use Closure;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\Finder\Exception\AccessDeniedException;
 
 class PermissionMiddleware
 {
     public function handle($request, Closure $next, $permission)
     {
         if (Auth::guest()) {
-            abort(403);
+            throw new AccessDeniedException("You do not have access to this resource.");
         }
 
-        $permission = is_array($permission)
-            ? $permission
-            : explode('|', $permission);
+        $permission = is_array($permission) ? $permission : explode('|', $permission);
 
         if (! Auth::user()->hasAnyPermission(...$permission)) {
-            abort(403);
+            throw new AccessDeniedException("You do not have access to this resource.");
         }
 
         return $next($request);
