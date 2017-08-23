@@ -22,8 +22,6 @@ class Permission extends Model implements PermissionContract
 
     public function __construct(array $attributes = [])
     {
-        $attributes['guard_name'] = $attributes['guard_name'] ?? config('auth.defaults.guard');
-
         parent::__construct($attributes);
 
         $this->setTable(config('permission.table_names.permissions'));
@@ -31,10 +29,8 @@ class Permission extends Model implements PermissionContract
 
     public static function create(array $attributes = [])
     {
-        $attributes['guard_name'] = $attributes['guard_name'] ?? config('auth.defaults.guard');
-
-        if (static::getPermissions()->where('name', $attributes['name'])->where('guard_name', $attributes['guard_name'])->first()) {
-            throw PermissionAlreadyExists::create($attributes['name'], $attributes['guard_name']);
+        if (static::getPermissions()->where('name', $attributes['name'])->first()) {
+            throw PermissionAlreadyExists::create($attributes['name']);
         }
 
         return static::query()->create($attributes);
@@ -52,12 +48,12 @@ class Permission extends Model implements PermissionContract
     }
 
     /**
-     * A permission belongs to some users of the model associated with its guard.
+     * A permission belongs to some users of the model.
      */
     public function users(): MorphToMany
     {
         return $this->morphedByMany(
-            getModelForGuard($this->attributes['guard_name']),
+            'App\User',
             'model',
             config('permission.table_names.model_has_permissions'),
             'permission_id',
@@ -66,23 +62,20 @@ class Permission extends Model implements PermissionContract
     }
 
     /**
-     * Find a permission by its name (and optionally guardName).
+     * Find a permission by its name.
      *
      * @param string $name
-     * @param string|null $guardName
      *
      * @throws \Spatie\Permission\Exceptions\PermissionDoesNotExist
      *
      * @return \Spatie\Permission\Contracts\Permission
      */
-    public static function findByName(string $name, $guardName = null): PermissionContract
+    public static function findByName(string $name): PermissionContract
     {
-        $guardName = $guardName ?? config('auth.defaults.guard');
-
-        $permission = static::getPermissions()->where('name', $name)->where('guard_name', $guardName)->first();
+        $permission = static::getPermissions()->where('name', $name)->first();
 
         if (!$permission) {
-            throw PermissionDoesNotExist::create($name, $guardName);
+            throw PermissionDoesNotExist::create($name);
         }
 
         return $permission;

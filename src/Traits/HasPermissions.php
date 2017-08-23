@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\DB;
 use ReflectionClass;
 use Spatie\Permission\PermissionRegistrar;
 use Spatie\Permission\Contracts\Permission;
-use Spatie\Permission\Exceptions\GuardDoesNotMatch;
 
 trait HasPermissions
 {
@@ -37,9 +36,6 @@ trait HasPermissions
             ->flatten()
             ->map(function ($permission) {
                 return $this->getStoredPermission($permission);
-            })
-            ->each(function ($permission) {
-                $this->ensureModelSharesGuard($permission);
             })
             ->all();
 
@@ -79,7 +75,6 @@ trait HasPermissions
         $now = Carbon::now();
         $this->permissions()
             ->where('name', $permission->name)
-            ->where('guard_name', $permission->guard_name)
             ->where('start', '<=', $now->toDateTimeString())
             ->where(function ($query) use ($now) {
                 $query->where('end', '>=', $now->toDateTimeString());
@@ -136,52 +131,16 @@ trait HasPermissions
     protected function getStoredPermission($permissions): Permission
     {
         if (is_string($permissions)) {
-            return app(Permission::class)->findByName($permissions, $this->getDefaultGuardName());
+            return app(Permission::class)->findByName($permissions);
         }
 
         if (is_array($permissions)) {
             return app(Permission::class)
                 ->whereIn('name', $permissions)
-                ->whereId('guard_name', $this->getGuardNames())
                 ->get();
         }
 
         return $permissions;
-    }
-
-    /**
-     * @param \Spatie\Permission\Contracts\Permission|\Spatie\Permission\Contracts\Role $roleOrPermission
-     *
-     * @throws \Spatie\Permission\Exceptions\GuardMismatch
-     */
-    protected function ensureModelSharesGuard($roleOrPermission)
-    {
-        if (!$this->getGuardNames()->contains($roleOrPermission->guard_name)) {
-            throw GuardDoesNotMatch::create($roleOrPermission->guard_name, $this->getGuardNames());
-        }
-    }
-
-    protected function getGuardNames(): Collection
-    {
-        if ($this->guard_name) {
-            return collect($this->guard_name);
-        }
-
-        return collect(config('auth.guards'))
-            ->map(function ($guard) {
-                return config("auth.providers.{$guard['provider']}.model");
-            })
-            ->filter(function ($model) {
-                return get_class($this) === $model;
-            })
-            ->keys();
-    }
-
-    protected function getDefaultGuardName(): string
-    {
-        $default = config('auth.defaults.guard');
-
-        return $this->getGuardNames()->first() ?: $default;
     }
 
     /**

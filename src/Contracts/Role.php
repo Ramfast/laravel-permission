@@ -14,16 +14,15 @@ interface Role
     public function permissions(): BelongsToMany;
 
     /**
-     * Find a role by its name and guard name.
+     * Find a role by its name.
      *
      * @param string $name
-     * @param string|null $guardName
      *
      * @return \Spatie\Permission\Contracts\Role
      *
      * @throws RoleDoesNotExist
      */
-    public static function findByName(string $name, $guardName): Role;
+    public static function findByName(string $name): Role;
 
     /**
      * Determine if the user may perform the given permission.

@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Permission\Traits\HasPermissions;
 use Spatie\Permission\Exceptions\RoleDoesNotExist;
-use Spatie\Permission\Exceptions\GuardDoesNotMatch;
 use Spatie\Permission\Exceptions\RoleAlreadyExists;
 use Spatie\Permission\Contracts\Role as RoleContract;
 use Spatie\Permission\Traits\RefreshesPermissionCache;
@@ -23,19 +22,14 @@ class Role extends Model implements RoleContract
 
     public function __construct(array $attributes = [])
     {
-        $attributes['guard_name'] = $attributes['guard_name'] ?? config('auth.defaults.guard');
-
         parent::__construct($attributes);
-
         $this->setTable(config('permission.table_names.roles'));
     }
 
     public static function create(array $attributes = [])
     {
-        $attributes['guard_name'] = $attributes['guard_name'] ?? config('auth.defaults.guard');
-
-        if (static::where('name', $attributes['name'])->where('guard_name', $attributes['guard_name'])->first()) {
-            throw RoleAlreadyExists::create($attributes['name'], $attributes['guard_name']);
+        if (static::where('name', $attributes['name'])->first()) {
+            throw RoleAlreadyExists::create($attributes['name']);
         }
 
         return static::query()->create($attributes);
@@ -53,12 +47,12 @@ class Role extends Model implements RoleContract
     }
 
     /**
-     * A role belongs to some users of the model associated with its guard.
+     * A role belongs to some users of the model.
      */
     public function users(): MorphToMany
     {
         return $this->morphedByMany(
-            getModelForGuard($this->attributes['guard_name']),
+            'App\User',
             'model',
             config('permission.table_names.model_has_roles'),
             'role_id',
@@ -67,20 +61,17 @@ class Role extends Model implements RoleContract
     }
 
     /**
-     * Find a role by its name and guard name.
+     * Find a role by its name.
      *
      * @param string $name
-     * @param string|null $guardName
      *
      * @return \Spatie\Permission\Contracts\Role|\Spatie\Permission\Models\Role
      *
      * @throws \Spatie\Permission\Exceptions\RoleDoesNotExist
      */
-    public static function findByName(string $name, $guardName = null): RoleContract
+    public static function findByName(string $name): RoleContract
     {
-        $guardName = $guardName ?? config('auth.defaults.guard');
-
-        $role = static::where('name', $name)->where('guard_name', $guardName)->first();
+        $role = static::where('name', $name)->first();
 
         if (! $role) {
             throw RoleDoesNotExist::create($name);
@@ -95,17 +86,11 @@ class Role extends Model implements RoleContract
      * @param string|Permission $permission
      *
      * @return bool
-     *
-     * @throws \Spatie\Permission\Exceptions\GuardDoesNotMatch
      */
     public function hasPermissionTo($permission): bool
     {
         if (is_string($permission)) {
-            $permission = app(Permission::class)->findByName($permission, $this->getDefaultGuardName());
-        }
-
-        if (! $this->getGuardNames()->contains($permission->guard_name)) {
-            throw GuardDoesNotMatch::create($permission->guard_name, $this->getGuardNames());
+            $permission = app(Permission::class)->findByName($permission);
         }
 
         return $this->permissions->contains('id', $permission->id);

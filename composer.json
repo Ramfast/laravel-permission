@@ -33,14 +33,6 @@
     "autoload": {
         "psr-4": {
             "Spatie\\Permission\\": "src"
-        },
-        "files": [
-            "src/helpers.php"
-        ]
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "Spatie\\Permission\\Test\\": "tests"
         }
     },
     "scripts": {

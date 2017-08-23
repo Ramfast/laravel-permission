@@ -3,7 +3,6 @@
 namespace Spatie\Permission\Traits;
 
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use ReflectionClass;
@@ -75,7 +74,7 @@ trait HasRoles
                 return $role;
             }
 
-            return app(Role::class)->findByName($role, $this->getDefaultGuardName());
+            return app(Role::class)->findByName($role);
         }, $roles);
 
         return $query->whereHas('roles', function ($query) use ($roles) {
@@ -112,9 +111,6 @@ trait HasRoles
             ->flatten()
             ->map(function ($role) {
                 return $this->getStoredRole($role);
-            })
-            ->each(function ($role) {
-                $this->ensureModelSharesGuard($role);
             })
             ->all();
 
@@ -155,7 +151,6 @@ trait HasRoles
 
         $this->roles()
             ->where('name', $role->name)
-            ->where('guard_name', $role->guard_name)
             ->where('start', '<=', $now->toDateTimeString())
             ->where(function ($query) use ($now) {
                 $query->where('end', '>=', $now->toDateTimeString());
@@ -241,13 +236,11 @@ trait HasRoles
     {
         $now = Carbon::now();
         return $this->roles()
-            ->where('guard_name', $this->getDefaultGuardName())
             ->where('start', '<=', $now->toDateTimeString())
             ->where(function ($query) use ($now) {
                 $query->where('end', '>=', $now->toDateTimeString());
                 $query->orWhereNull('end');
             })
-
             ->get();
     }
 
@@ -295,17 +288,13 @@ trait HasRoles
      * Determine if the model may perform the given permission.
      *
      * @param string|\Spatie\Permission\Contracts\Permission $permission
-     * @param string|null $guardName
      *
      * @return bool
      */
-    public function hasPermissionTo($permission, $guardName = null): bool
+    public function hasPermissionTo($permission): bool
     {
         if (is_string($permission)) {
-            $permission = app(Permission::class)->findByName(
-                $permission,
-                $guardName ?? $this->getDefaultGuardName()
-            );
+            $permission = app(Permission::class)->findByName($permission);
         }
 
         return $this->hasDirectPermission($permission) || $this->hasPermissionViaRole($permission);
@@ -366,7 +355,7 @@ trait HasRoles
     public function hasDirectPermission($permission): bool
     {
         if (is_string($permission)) {
-            $permission = app(Permission::class)->findByName($permission, $this->getDefaultGuardName());
+            $permission = app(Permission::class)->findByName($permission);
 
             if (!$permission) {
                 return false;
@@ -418,7 +407,7 @@ trait HasRoles
     protected function getStoredRole($role): Role
     {
         if (is_string($role)) {
-            return app(Role::class)->findByName($role, $this->getDefaultGuardName());
+            return app(Role::class)->findByName($role);
         }
 
         return $role;

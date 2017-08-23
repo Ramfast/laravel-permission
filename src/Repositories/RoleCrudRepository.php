@@ -36,8 +36,7 @@ class RoleCrudRepository implements RoleCrudContract
     public function createRole(array $attributes): Role
     {
         return $this->role::create([
-            'name'       => $attributes['name'],
-            'guard_name' => array_key_exists('guard_name', $attributes) ? $attributes['guard_name'] : config('auth.defaults.guard')
+            'name' => $attributes['name']
         ]);
     }
 
