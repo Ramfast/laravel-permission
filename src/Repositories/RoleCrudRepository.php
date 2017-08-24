@@ -17,22 +17,47 @@ class RoleCrudRepository implements RoleCrudContract
         $this->permission = app()->make(config('permission.models.permission'));
     }
 
-
+    /**
+     * Get all the roles in the database.
+     *
+     * @return Collection
+     */
     public function getAllRoles(): Collection
     {
         return $this->role::all();
     }
 
+    /**
+     * Get a role by name.
+     *
+     * @param string $name
+     *
+     * @return \Spatie\Permission\Contracts\Role
+     */
     public function getRoleByName($name): Role
     {
         return $this->role::where('name', $name)->firstOrFail();
     }
 
+    /**
+     * Get a role by id.
+     *
+     * @param int $id
+     *
+     * @return \Spatie\Permission\Contracts\Role
+     */
     public function getRoleById($id): Role
     {
         return $this->role::findOrFail($id);
     }
 
+    /**
+     * Create a new role with the given attributes.
+     *
+     * @param array $attributes
+     *
+     * @return \Spatie\Permission\Contracts\Role
+     */
     public function createRole(array $attributes): Role
     {
         return $this->role::create([
@@ -40,7 +65,13 @@ class RoleCrudRepository implements RoleCrudContract
         ]);
     }
 
-
+    /**
+     * Update a role with the given attributes.
+     *
+     * @param array $attributes
+     *
+     * @return \Spatie\Permission\Contracts\Role
+     */
     public function updateRole($role, array $attributes): Role
     {
         $role = $this->resolveRoleArgument($role);
@@ -49,6 +80,13 @@ class RoleCrudRepository implements RoleCrudContract
         return $role;
     }
 
+    /**
+     * Delete role with $id
+     *
+     * @param int|string|\Spatie\Permission\Contracts\Role $role
+     *
+     * @return bool
+     */
     public function deleteRole($role): bool
     {
         $role = $this->resolveRoleArgument($role);
@@ -56,6 +94,14 @@ class RoleCrudRepository implements RoleCrudContract
         return $role->delete();
     }
 
+    /**
+     * Assign one or more permissions to a role.
+     *
+     * @param int|string|\Spatie\Permission\Contracts\Role $role
+     * @param string|array|\Spatie\Permission\Contracts\Permission|\Illuminate\Support\Collection $permissions
+     *
+     * @return \Spatie\Permission\Contracts\Role
+     */
     public function assignPermissionsToRole($role, $permissions): Role
     {
         $role = $this->resolveRoleArgument($role);
@@ -64,14 +110,30 @@ class RoleCrudRepository implements RoleCrudContract
         return $role;
     }
 
-    public function removePermissionsFromRole($role, $permissions): Role
+    /**
+     * Remove permission from role.
+     *
+     * @param int|string|\Spatie\Permission\Contracts\Role $role
+     * @param string|\Spatie\Permission\Contracts\Permission $permission
+     *
+     * @return \Spatie\Permission\Contracts\Role
+     */
+    public function removePermissionsFromRole($role, $permission): Role
     {
         $role = $this->resolveRoleArgument($role);
-        $role->revokePermissionTo($permissions);
+        $role->revokePermissionTo($permission);
 
         return $role;
     }
 
+    /**
+     * Hard delete all current permissions and set the given ones.
+     *
+     * @param int|string|\Spatie\Permission\Contracts\Role $role
+     * @param string|array|\Spatie\Permission\Contracts\Permission|\Illuminate\Support\Collection $permissions
+     *
+     * @return \Spatie\Permission\Contracts\Role
+     */
     public function syncRolePermissions($role, $permissions): Role
     {
         $role = $this->resolveRoleArgument($role);
@@ -80,6 +142,13 @@ class RoleCrudRepository implements RoleCrudContract
         return $role;
     }
 
+    /**
+     * Return a role based on the type of argument given.
+     *
+     * @param int|string|\Spatie\Permission\Contracts\Role $role
+     *
+     * @return \Spatie\Permission\Contracts\Role
+     */
     private function resolveRoleArgument($role): Role
     {
         if ($role instanceof Role) {

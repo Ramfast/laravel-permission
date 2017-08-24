@@ -9,99 +9,187 @@ use Spatie\Permission\Contracts\HasPermissionsContract;
 class HasPermissionsRepository implements HasPermissionsContract
 {
 
+    /**
+     * Get all roles assigned to model through history.
+     *
+     * @param \Illuminate\Database\Eloquent $model
+     *
+     * @return Collection
+     */
     public function getRoles($model): Collection
     {
         return $model->roles()->get();
     }
 
-    public function getActiveRoles($model): Collection
+    /**
+     * Get all roles currently assigned to model.
+     *
+     * @param \Illuminate\Database\Eloquent $model
+     *
+     * @return Collection
+     */
+    public function getCurrentRoles($model): Collection
     {
-        $now = Carbon::now();
-
-        return $model->roles()
-            ->where('start', '<=', $now->toDateTimeString())
-            ->where(function ($query) use ($now) {
-                $query->where('end', '>=', $now->toDateTimeString());
-                $query->orWhereNull('end');
-            })->get();
+        return $model->getCurrentRoles();
     }
 
+    /**
+     * Assign a role to the model. If no start is provided, now() will be set. If no end is given, role will last indefinitely.
+     *
+     * @param \Illuminate\Database\Eloquent $model
+     * @param array|string|\Spatie\Permission\Contracts\Role $role
+     * @param null|string|\Carbon\Carbon $start
+     * @param null|string|\Carbon\Carbon $end
+     *
+     * @return \Illuminate\Database\Eloquent $model
+     */
     public function assignRole($model, $role, $start = null, $end = null)
     {
-        /* TODO: make sure you can not create duplicates. */
-        $model->assignRole($start, $end, $role);
+        return $model->assignRole($start, $end, $role);
     }
 
+    /**
+     * End a current role on model. If no end is provided, now() will be set.
+     *
+     * @param \Illuminate\Database\Eloquent $model
+     * @param array|string|\Spatie\Permission\Contracts\Role $role
+     * @param null|string|\Carbon\Carbon $end
+     *
+     * @return \Illuminate\Database\Eloquent $model
+     */
     public function endRole($model, $role, $end = null)
     {
-        $model->endRole($role, $end);
+        return $model->endRole($role, $end);
     }
 
+    /**
+     * Delete the role from the model.
+     *
+     * @param \Illuminate\Database\Eloquent $model
+     * @param array|string|\Spatie\Permission\Contracts\Role $role
+     *
+     * @return \Illuminate\Database\Eloquent $model
+     */
     public function deleteRole($model, $role)
     {
         return $model->removeRole($role);
     }
 
 
-    public function hasRole($model, $role)
-    {
-        return $model->hasRole($role);
-    }
-
-    public function hasPermissionTo($model, $permission)
-    {
-        return $model->hasPermissionTo($permission);
-    }
-
-    public function hasAnyRole($model, $roles)
-    {
-    }
-
-    public function hasAllRoles($model, $roles)
-    {
-    }
-
-    public function hasAnyPermission(...$permissions): bool
-    {
-        return false;
-    }
-
-    /*
-     *  By "direct permissions" we refer to permissions that are directly attached to the model
-     *  via model_has_permissions table. As we encourage the use of permissions either through a role or a relation,
-     *  these methods are all moved down to the bottom of this file. Use with caution.
+    /**
+     * Get all direct permissions assigned to model through history.
+     *
+     * @param \Illuminate\Database\Eloquent $model
+     *
+     * @return Collection
      */
-    public function getAllDirectPermissions($model)
+    public function getDirectPermissions($model)
     {
-        return $model->permissions()->get();
+        return $model->getDirectPermissions();
     }
 
-    public function getAllActiveDirectPermissions($model)
+    /**
+     * Get all direct permissions currently assigned to model.
+     *
+     * @param \Illuminate\Database\Eloquent $model
+     *
+     * @return Collection
+     */
+    public function getCurrentDirectPermissions($model)
     {
-        $now = Carbon::now();
-
-        return $model->permissions()
-            ->where('start', '<=', $now->toDateTimeString())
-            ->where(function ($query) use ($now) {
-                $query->where('end', '>=', $now->toDateTimeString());
-                $query->orWhereNull('end');
-            })->get();
+        return $model->getCurrentDirectPermissions();
     }
 
+    /**
+     * Assign a direct permission to a model
+     *
+     * @param \Illuminate\Database\Eloquent $model
+     * @param string|array|\Spatie\Permission\Contracts\Permission|\Illuminate\Support\Collection $permission
+     *
+     * @return \Illuminate\Database\Eloquent $model
+     */
     public function assignDirectPermission($model, $permission, $start = null, $end = null)
     {
-        /* TODO: make sure you can not create duplicates. */
         return $model->givePermissionTo($start, $end, $permission);
     }
 
+    /**
+     * End a model's direct permission
+     *
+     * @param \Illuminate\Database\Eloquent $model
+     * @param string|\Spatie\Permission\Contracts\Permission|\Illuminate\Support\Collection $permission
+     *
+     * @return \Illuminate\Database\Eloquent $model
+     */
     public function endDirectPermission($model, $permission, $end = null)
     {
         return $model->endPermissionTo($permission, $end);
     }
 
+    /**
+     * Delete a model's direct permission
+     *
+     * @param \Illuminate\Database\Eloquent $model
+     * @param \Spatie\Permission\Contracts\Permission|string $permission
+     *
+     * @return \Illuminate\Database\Eloquent $model
+     */
     public function deleteDirectPermission($model, $permission)
     {
         return $model->revokePermissionTo($permission);
+    }
+
+
+    /**
+     * Determine if the model has one of the given roles.
+     *
+     * @param \Illuminate\Database\Eloquent $model
+     * @param string|array|\Spatie\Permission\Contracts\Role|\Illuminate\Support\Collection $role
+     *
+     * @return bool
+     */
+    public function hasRole($model, $role)
+    {
+        return $model->hasRole($role);
+    }
+
+    /**
+     * Determine if the model has all of the given role(s).
+     *
+     * @param \Illuminate\Database\Eloquent $model
+     * @param string|\Spatie\Permission\Contracts\Role|\Illuminate\Support\Collection $roles
+     *
+     * @return bool
+     */
+    public function hasAllRoles($model, $roles)
+    {
+        return $model->hasAllRoles($roles);
+    }
+
+    /**
+     * Determine if the model has the given permission, either directly or through role.
+     *
+     * @param \Illuminate\Database\Eloquent $model
+     * @param string|\Spatie\Permission\Contracts\Permission $permission
+     *
+     * @return bool
+     */
+    public function hasPermissionTo($model, $permission)
+    {
+        return $model->hasPermissionTo($permission);
+    }
+
+    /**
+     * Determine if the model has any of the given permissions.
+     *
+     * @param \Illuminate\Database\Eloquent $model
+     * @param array|\Illuminate\Support\Collection $permissions
+     *
+     * @return bool
+     */
+    public function hasAnyPermission($model, $permissions): bool
+    {
+        return $model->hasAnyPermission($permissions);
     }
 
 }

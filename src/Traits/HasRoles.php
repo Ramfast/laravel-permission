@@ -240,8 +240,7 @@ trait HasRoles
             ->where(function ($query) use ($now) {
                 $query->where('end', '>=', $now->toDateTimeString());
                 $query->orWhereNull('end');
-            })
-            ->get();
+            })->get();
     }
 
     /**
@@ -303,16 +302,12 @@ trait HasRoles
     /**
      * Determine if the model has any of the given permissions.
      *
-     * @param array ...$permissions
+     * @param array|\Illuminate\Support\Collection $permissions
      *
      * @return bool
      */
-    public function hasAnyPermission(...$permissions): bool
+    public function hasAnyPermission($permissions): bool
     {
-        if (is_array($permissions[0])) {
-            $permissions = $permissions[0];
-        }
-
         foreach ($permissions as $permission) {
             if ($this->hasPermissionTo($permission)) {
                 return true;
@@ -380,6 +375,18 @@ trait HasRoles
     public function getDirectPermissions(): Collection
     {
         return $this->permissions;
+    }
+
+    public function getCurrentDirectPermissions(): Collection
+    {
+        $now = Carbon::now();
+
+        return $this->permissions()
+            ->where('start', '<=', $now->toDateTimeString())
+            ->where(function ($query) use ($now) {
+                $query->where('end', '>=', $now->toDateTimeString());
+                $query->orWhereNull('end');
+            })->get();
     }
 
     /**

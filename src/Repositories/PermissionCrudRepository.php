@@ -15,21 +15,47 @@ class PermissionCrudRepository implements PermissionCrudContract
         $this->permission = app()->make(config('permission.models.permission'));
     }
 
+    /**
+     * Get all the permissions in the database.
+     *
+     * @return Collection
+     */
     public function getAllPermissions(): Collection
     {
         return $this->permission::all();
     }
 
+    /**
+     * Get a permission by name.
+     *
+     * @param string $name
+     *
+     * @return \Spatie\Permission\Contracts\Permission
+     */
     public function getPermissionByName($name): Permission
     {
         return $this->permission::where('name', $name)->firstOrFail();
     }
 
+    /**
+     * Get a permission by id.
+     *
+     * @param int $id
+     *
+     * @return \Spatie\Permission\Contracts\Permission
+     */
     public function getPermissionById($id): Permission
     {
         return $this->permission::findOrFail($id);
     }
 
+    /**
+     * Create a new permission with the given attributes.
+     *
+     * @param array $attributes
+     *
+     * @return \Spatie\Permission\Contracts\Permission
+     */
     public function createPermission(array $attributes): Permission
     {
         return $this->permission::create([
@@ -37,6 +63,13 @@ class PermissionCrudRepository implements PermissionCrudContract
         ]);
     }
 
+    /**
+     * Update a permission with the given attributes.
+     *
+     * @param array $attributes
+     *
+     * @return \Spatie\Permission\Contracts\Permission
+     */
     public function updatePermission($permission, array $attributes): Permission
     {
         $permission = $this->resolvePermissionArgument($permission);
@@ -45,6 +78,13 @@ class PermissionCrudRepository implements PermissionCrudContract
         return $permission;
     }
 
+    /**
+     * Delete permission with $id
+     *
+     * @param int|string|\Spatie\Permission\Contracts\Permission $permission
+     *
+     * @return bool
+     */
     public function deletePermission($permission): bool
     {
         $permission = $this->resolvePermissionArgument($permission);
@@ -52,6 +92,13 @@ class PermissionCrudRepository implements PermissionCrudContract
         return $permission->delete();
     }
 
+    /**
+     * Return a permission based on the type of argument given.
+     *
+     * @param int|string|\Spatie\Permission\Contracts\Permission $permission
+     *
+     * @return \Spatie\Permission\Contracts\Permission
+     */
     private function resolvePermissionArgument($permission): Permission
     {
         if ($permission instanceof Permission) {
