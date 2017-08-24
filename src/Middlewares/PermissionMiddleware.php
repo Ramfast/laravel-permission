@@ -16,7 +16,7 @@ class PermissionMiddleware
 
         $permission = is_array($permission) ? $permission : explode('|', $permission);
 
-        if (! Auth::user()->hasAnyPermission(...$permission)) {
+        if (! Auth::user()->hasAnyPermission($permission)) {
             throw new AccessDeniedException("You do not have access to this resource.");
         }
 
