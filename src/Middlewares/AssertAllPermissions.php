@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Psr\Log\InvalidArgumentException;
 use Symfony\Component\Finder\Exception\AccessDeniedException;
 
-class AssertOnePermission
+class AssertAllPermissions
 {
     public function handle($request, Closure $next, $permissions = null, $conditions = null)
     {
@@ -19,23 +19,40 @@ class AssertOnePermission
             throw new AccessDeniedException("You do not have access to this resource.");
         }
 
-        if ($permissions && 'null' !== $permissions) {
-            $permissions = is_array($permissions) ? $permissions : explode('|', $permissions);
-
-            foreach ($permissions as $permission) {
-                if (Auth::user()->hasPermissionTo($permission)) {
-                    return $next($request);
-                }
-            }
-        }
-
-        foreach ($this->resolveConditions($conditions) as $condition) {
-            if ($condition->validate()) {
-                return $next($request);
-            }
+        if ($this->allPermissionsAreMet($permissions) && $this->allConditionsAreMet($conditions)) {
+            return $next($request);
         }
 
         throw new AccessDeniedException("You do not have access to this resource.");
+
+    }
+
+    protected function allPermissionsAreMet($permissions = null)
+    {
+        if ('null' == $permissions) {
+            return true;
+        }
+
+        $permissions = is_array($permissions) ? $permissions : explode('|', $permissions);
+        foreach ($permissions as $permission) {
+            if (!Auth::user()->hasPermissionTo($permission)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    protected function allConditionsAreMet($conditions = null)
+    {
+        $conditions = $this->resolveConditions($conditions);
+        foreach ($conditions as $condition) {
+            if (!$condition->validate()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     protected function resolveConditions($conditions)
