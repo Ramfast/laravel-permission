@@ -326,18 +326,7 @@ trait HasRoles
      */
     protected function hasPermissionViaRole(Permission $permission): bool
     {
-        $now = Carbon::now();
-        $roles =
-            $this->roles()
-                ->where('start', '<=', $now->toDateTimeString())
-                ->where(function ($query) use ($now) {
-                    $query->where('end', '>=', $now->toDateTimeString());
-                    $query->orWhereNull('end');
-                })->get();
-
-        return $roles->contains('id', $permission->id);
-
-        return $this->hasRole($permission->roles);
+        return $this->hasRole($permission->roles()->get());
     }
 
     /**
